@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import Connection from '../models/Connection.js';
-import Conversation from '../models/Conversation.js';
+import { Connection } from '../models/Connection.js';
+import { Conversation } from '../models/Conversation.js';
 import { requireAuth } from '../middleware/requireAuth.js';
 
 const router = Router();
@@ -30,3 +30,4 @@ router.get('/', async (req, res, next) => {
 });
 
 export const notificationRoutes = router;
+export default router;

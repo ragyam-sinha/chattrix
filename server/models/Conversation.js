@@ -18,4 +18,5 @@ conversationSchema.index({ participants: 1, lastMessageAt: -1 });
 
 const Conversation =
   mongoose.models.Conversation || mongoose.model('Conversation', conversationSchema);
+export { Conversation };
 export default Conversation;

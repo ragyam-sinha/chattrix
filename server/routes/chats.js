@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import Conversation from '../models/Conversation.js';
-import Message from '../models/Message.js';
-import Connection from '../models/Connection.js';
+import { Conversation } from '../models/Conversation.js';
+import { Message } from '../models/Message.js';
+import { Connection } from '../models/Connection.js';
 import { requireAuth } from '../middleware/requireAuth.js';
 
 const router = Router();
@@ -223,3 +223,4 @@ router.patch('/:conversationId/read', async (req, res, next) => {
 });
 
 export const chatRoutes = router;
+export default router;

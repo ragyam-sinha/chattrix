@@ -20,4 +20,5 @@ connectionSchema.index({ recipientId: 1, status: 1 });
 connectionSchema.index({ requesterId: 1, status: 1 });
 
 const Connection = mongoose.models.Connection || mongoose.model('Connection', connectionSchema);
+export { Connection };
 export default Connection;

@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import User from '../models/User.js';
-import Connection from '../models/Connection.js';
+import { User } from '../models/User.js';
+import { Connection } from '../models/Connection.js';
 import { requireAuth } from '../middleware/requireAuth.js';
 
 const router = Router();
@@ -103,3 +103,4 @@ router.get('/:userId', async (req, res, next) => {
 });
 
 export const userRoutes = router;
+export default router;
