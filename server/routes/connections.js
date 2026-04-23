@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import Connection from '../models/Connection.js';
 import Conversation from '../models/Conversation.js';
-import requireAuth from '../middleware/auth.js';
+import { requireAuth } from '../middleware/requireAuth.js';
 
 const router = Router();
 router.use(requireAuth);

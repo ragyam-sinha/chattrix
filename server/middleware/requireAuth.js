@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 
-export default function requireAuth(req, res, next) {
+export const requireAuth = (req, res, next) => {
   const token = req.cookies?.chatrix_session;
   if (!token) {
     return res.status(401).json({ error: 'Unauthenticated' });
