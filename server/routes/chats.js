@@ -3,6 +3,7 @@ import { Conversation } from '../models/Conversation.js';
 import { Message } from '../models/Message.js';
 import { Connection } from '../models/Connection.js';
 import { requireAuth } from '../middleware/requireAuth.js';
+import { publishToConversation } from '../lib/ably.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -178,6 +179,16 @@ router.post('/:conversationId/messages', async (req, res, next) => {
 
     await message.populate('senderId', '_id chatrixId displayName avatar');
 
+    // Publish to Ably — both users get instant push via WebSocket
+    try {
+      await publishToConversation(req.params.conversationId, 'new_message', {
+        message: message.toObject(),
+      });
+    } catch (ablyErr) {
+      // Non-fatal: message is already saved, client will see it on next poll
+      console.error('[Ably publish error]', ablyErr.message);
+    }
+
     res.status(201).json({ message });
   } catch (err) {
     next(err);
@@ -227,6 +238,15 @@ router.delete('/messages/:messageId', async (req, res, next) => {
     message.isDeleted = true;
     message.text = 'This message was deleted';
     await message.save();
+
+    // Notify both users instantly via Ably
+    try {
+      await publishToConversation(message.conversationId.toString(), 'message_deleted', {
+        messageId: message._id,
+      });
+    } catch (ablyErr) {
+      console.error('[Ably publish error]', ablyErr.message);
+    }
 
     res.json({ message });
   } catch (err) {

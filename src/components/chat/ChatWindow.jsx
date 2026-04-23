@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchConversation, fetchMessages, sendMessage, markAsRead, deleteMessage } from '../../services/api';
@@ -6,6 +6,7 @@ import useAuthStore from '../../store/useAuthStore';
 import Avatar from '../common/Avatar';
 import EmojiPicker from 'emoji-picker-react';
 import { Smile, Trash2 } from 'lucide-react';
+import { subscribeToConversation } from '../../lib/ably';
 
 
 function formatMessageTime(dateStr) {
@@ -41,14 +42,53 @@ export default function ChatWindow() {
     enabled: !!conversationId,
   });
 
-  // Fetch messages with polling
+  // Fetch messages ONCE on mount (initial history load) — no polling
   const { data: msgData, isLoading: msgLoading } = useQuery({
     queryKey: ['chat', conversationId, 'messages'],
     queryFn: () => fetchMessages(conversationId),
     enabled: !!conversationId,
-    refetchInterval: 1000,
-    refetchIntervalInBackground: false,
+    refetchInterval: false,      // Ably handles real-time, no polling needed
+    staleTime: Infinity,
   });
+
+  // Ably real-time subscription
+  useEffect(() => {
+    if (!conversationId) return;
+    let unsubscribe;
+
+    subscribeToConversation(conversationId, {
+      onNewMessage: ({ message }) => {
+        // Append new message directly to cache — instant, no re-fetch
+        queryClient.setQueryData(['chat', conversationId, 'messages'], (old) => {
+          if (!old) return old;
+          const exists = old.messages.some((m) => m._id === message._id);
+          if (exists) return old;
+          return { ...old, messages: [...old.messages, message] };
+        });
+        // Refresh sidebar chat list
+        queryClient.invalidateQueries({ queryKey: ['chats'] });
+      },
+      onMessageDeleted: ({ messageId }) => {
+        queryClient.setQueryData(['chat', conversationId, 'messages'], (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            messages: old.messages.map((m) =>
+              m._id === messageId
+                ? { ...m, isDeleted: true, text: 'This message was deleted' }
+                : m
+            ),
+          };
+        });
+      },
+    }).then((unsub) => {
+      unsubscribe = unsub;
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [conversationId, queryClient]);
 
   const conversation = convData?.conversation;
   const messages = msgData?.messages || [];

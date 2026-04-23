@@ -11,6 +11,7 @@ import { userRoutes } from '../server/routes/users.js';
 import { connectionRoutes } from '../server/routes/connections.js';
 import { chatRoutes } from '../server/routes/chats.js';
 import { notificationRoutes } from '../server/routes/notifications.js';
+import { realtimeRoutes } from '../server/routes/realtime.js';
 
 const app = express();
 
@@ -92,6 +93,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/connections', connectionRoutes);
 app.use('/api/chats', chatRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/realtime', realtimeRoutes);
 
 // Apply message rate limit specifically to send endpoint
 app.use('/api/chats/:conversationId/messages', messageLimiter);
