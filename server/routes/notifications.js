@@ -29,4 +29,4 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-export default router;
+export const notificationRoutes = router;

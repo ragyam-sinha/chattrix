@@ -222,4 +222,4 @@ router.patch('/:conversationId/read', async (req, res, next) => {
   }
 });
 
-export default router;
+export const chatRoutes = router;

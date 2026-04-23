@@ -140,4 +140,4 @@ router.post('/logout', requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
-export default router;
+export const authRoutes = router;
