@@ -9,6 +9,7 @@ import ContactsTab from '../components/connections/ContactsTab';
 import SearchSection from '../components/search/SearchSection';
 import ChatWindow from '../components/chat/ChatWindow';
 import ProfileDropdown from '../components/ProfileDropdown';
+import ProfileSettings from '../components/ProfileSettings';
 
 export default function AppShell() {
   const { user } = useAuthStore();
@@ -80,6 +81,7 @@ export default function AppShell() {
 
       <div className="main-panel">
         <Routes>
+          <Route path="settings" element={<ProfileSettings />} />
           <Route path="chat/:conversationId" element={<ChatWindow />} />
           <Route
             path="*"

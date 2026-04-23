@@ -54,16 +54,20 @@ export default function ChatsTab({ activeChatId }) {
         const other = conv.participants?.find((p) => p._id !== user._id);
         if (!other) return null;
 
+        const isRequester = conv.connectionId?.requesterId === user._id;
+        const customName = isRequester ? conv.connectionId?.recipientCustomName : conv.connectionId?.requesterCustomName;
+        const displayName = customName || other.displayName || other.chatrixId;
+
         return (
           <div
             key={conv._id}
             className={`chat-list-item ${conv._id === activeChatId ? 'active' : ''}`}
             onClick={() => navigate(`/app/chat/${conv._id}`)}
           >
-            <Avatar src={other.avatar} name={other.displayName} />
+            <Avatar src={other.avatar} name={displayName} />
             <div className="chat-list-info">
               <h4>
-                {other.displayName || other.chatrixId}
+                {displayName}
                 <span className="time">{formatTime(conv.lastMessageAt)}</span>
               </h4>
               <p>

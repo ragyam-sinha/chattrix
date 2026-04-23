@@ -102,5 +102,26 @@ router.get('/:userId', async (req, res, next) => {
   }
 });
 
+// DELETE /api/users/me — soft delete account
+router.delete('/me', async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // Soft delete: Change name and clear personal info
+    user.displayName = 'Deleted User';
+    user.avatar = '';
+    user.bio = '';
+    user.statusMessage = '';
+    user.email = `${user._id}@deleted.local`; // Scramble email to allow re-signup
+    user.googleId = `deleted_${user._id}`;
+    await user.save();
+
+    res.json({ message: 'Account deleted' });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export const userRoutes = router;
 export default router;

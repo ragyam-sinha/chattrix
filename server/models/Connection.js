@@ -11,6 +11,8 @@ const connectionSchema = new mongoose.Schema(
     },
     actionBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     acceptedAt: { type: Date },
+    requesterCustomName: { type: String, default: '' },
+    recipientCustomName: { type: String, default: '' },
   },
   { timestamps: true }
 );

@@ -252,5 +252,27 @@ router.patch('/:id/cancel', async (req, res, next) => {
   }
 });
 
+// PATCH /api/connections/:id/custom-name
+router.patch('/:id/custom-name', async (req, res, next) => {
+  try {
+    const { customName } = req.body;
+    const connection = await Connection.findById(req.params.id);
+    if (!connection) return res.status(404).json({ error: 'Connection not found' });
+
+    if (connection.requesterId.toString() === req.user.userId) {
+      connection.recipientCustomName = customName || '';
+    } else if (connection.recipientId.toString() === req.user.userId) {
+      connection.requesterCustomName = customName || '';
+    } else {
+      return res.status(403).json({ error: 'Not a participant in this connection' });
+    }
+
+    await connection.save();
+    res.json({ connection });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export const connectionRoutes = router;
 export default router;

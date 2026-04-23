@@ -7,6 +7,7 @@ export const loginWithGoogle = (credential) =>
 // Users
 export const fetchMe = () => api.get('/users/me').then((r) => r.data);
 export const updateMe = (data) => api.patch('/users/me', data).then((r) => r.data);
+export const deleteMe = () => api.delete('/users/me').then((r) => r.data);
 export const searchUser = (q) => api.get(`/users/search?q=${encodeURIComponent(q)}`).then((r) => r.data);
 export const fetchUser = (userId) => api.get(`/users/${userId}`).then((r) => r.data);
 
@@ -19,6 +20,8 @@ export const fetchContacts = () => api.get('/connections').then((r) => r.data);
 export const acceptConnection = (id) => api.patch(`/connections/${id}/accept`).then((r) => r.data);
 export const rejectConnection = (id) => api.patch(`/connections/${id}/reject`).then((r) => r.data);
 export const cancelConnection = (id) => api.patch(`/connections/${id}/cancel`).then((r) => r.data);
+export const updateContactName = (id, customName) => 
+  api.patch(`/connections/${id}/custom-name`, { customName }).then((r) => r.data);
 
 // Chats
 export const fetchChats = () => api.get('/chats').then((r) => r.data);
@@ -34,6 +37,8 @@ export const sendMessage = (conversationId, text) =>
   api.post(`/chats/${conversationId}/messages`, { text }).then((r) => r.data);
 export const markAsRead = (conversationId) =>
   api.patch(`/chats/${conversationId}/read`).then((r) => r.data);
+export const deleteMessage = (messageId) =>
+  api.delete(`/chats/messages/${messageId}`).then((r) => r.data);
 
 // Notifications
 export const fetchNotifications = () => api.get('/notifications').then((r) => r.data);

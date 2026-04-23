@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchConversation, fetchMessages, sendMessage, markAsRead } from '../../services/api';
+import { fetchConversation, fetchMessages, sendMessage, markAsRead, deleteMessage } from '../../services/api';
 import useAuthStore from '../../store/useAuthStore';
 import Avatar from '../common/Avatar';
+import EmojiPicker from 'emoji-picker-react';
+import { Smile, Trash2 } from 'lucide-react';
+
 
 function formatMessageTime(dateStr) {
   return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -27,6 +30,7 @@ export default function ChatWindow() {
   const queryClient = useQueryClient();
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const [showEmoji, setShowEmoji] = useState(false);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
 
@@ -42,13 +46,16 @@ export default function ChatWindow() {
     queryKey: ['chat', conversationId, 'messages'],
     queryFn: () => fetchMessages(conversationId),
     enabled: !!conversationId,
-    refetchInterval: 3000,
+    refetchInterval: 1000,
     refetchIntervalInBackground: false,
   });
 
   const conversation = convData?.conversation;
   const messages = msgData?.messages || [];
   const other = conversation?.participants?.find((p) => p._id !== user._id);
+  const isRequester = conversation?.connectionId?.requesterId === user._id;
+  const customName = isRequester ? conversation?.connectionId?.recipientCustomName : conversation?.connectionId?.requesterCustomName;
+  const displayName = customName || other?.displayName || other?.chatrixId || 'Loading...';
 
   // Mark as read when opening or receiving new messages
   useEffect(() => {
@@ -72,6 +79,7 @@ export default function ChatWindow() {
 
     setSending(true);
     setText('');
+    setShowEmoji(false);
     try {
       await sendMessage(conversationId, trimmed);
       queryClient.invalidateQueries({ queryKey: ['chat', conversationId, 'messages'] });
@@ -81,6 +89,21 @@ export default function ChatWindow() {
       console.error('Send error:', err);
     } finally {
       setSending(false);
+    }
+  };
+
+  const onEmojiClick = (emojiObject) => {
+    setText((prev) => prev + emojiObject.emoji);
+  };
+
+  const handleDeleteMessage = async (msgId) => {
+    if (window.confirm("Delete this message for everyone?")) {
+      try {
+        await deleteMessage(msgId);
+        queryClient.invalidateQueries({ queryKey: ['chat', conversationId, 'messages'] });
+      } catch (err) {
+        console.error('Failed to delete message:', err);
+      }
     }
   };
 
@@ -108,9 +131,9 @@ export default function ChatWindow() {
         >
           ←
         </button>
-        {other && <Avatar src={other.avatar} name={other.displayName} />}
+        {other && <Avatar src={other.avatar} name={displayName} />}
         <div className="chat-header-info">
-          <h3>{other?.displayName || 'Loading...'}</h3>
+          <h3>{displayName}</h3>
           <p>{other?.chatrixId}</p>
         </div>
       </div>
@@ -135,14 +158,23 @@ export default function ChatWindow() {
             }
 
             return (
-              <div key={msg._id}>
+              <div key={msg._id} style={{ display: 'flex', flexDirection: 'column' }}>
                 {showDate && <div className="date-separator">{msgDate}</div>}
-                <div className={`message-bubble ${isMine ? 'sent' : 'received'}`}>
+                <div className={`message-bubble ${isMine ? 'sent' : 'received'} ${msg.isDeleted ? 'deleted' : ''}`} style={{ position: 'relative' }}>
                   <div>{msg.text}</div>
                   <div className="message-time">
                     {formatMessageTime(msg.createdAt)}
-                    {isMine && msg.readAt && ' ✓✓'}
+                    {isMine && !msg.isDeleted && msg.readAt && ' ✓✓'}
                   </div>
+                  {isMine && !msg.isDeleted && (
+                    <button 
+                      onClick={() => handleDeleteMessage(msg._id)}
+                      style={{ position: 'absolute', top: -8, right: -8, background: 'var(--bg-danger)', color: 'white', border: 'none', borderRadius: '50%', width: 20, height: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      title="Delete message"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
                 </div>
               </div>
             );
@@ -151,19 +183,29 @@ export default function ChatWindow() {
         <div ref={messagesEndRef} />
       </div>
 
-      <form className="chat-composer" onSubmit={handleSend}>
-        <input
-          className="input"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Type a message..."
-          maxLength={4000}
-          disabled={sending}
-        />
-        <button className="btn btn-primary" type="submit" disabled={!text.trim() || sending}>
-          Send
-        </button>
-      </form>
+      <div style={{ position: 'relative' }}>
+        {showEmoji && (
+          <div style={{ position: 'absolute', bottom: '100%', right: 0, zIndex: 10 }}>
+            <EmojiPicker onEmojiClick={onEmojiClick} theme="auto" />
+          </div>
+        )}
+        <form className="chat-composer" onSubmit={handleSend} style={{ display: 'flex', alignItems: 'center' }}>
+          <button type="button" className="btn btn-ghost" onClick={() => setShowEmoji(!showEmoji)} style={{ padding: '8px' }}>
+            <Smile size={20} />
+          </button>
+          <input
+            className="input"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Type a message..."
+            maxLength={4000}
+            disabled={sending}
+          />
+          <button className="btn btn-primary" type="submit" disabled={!text.trim() || sending}>
+            Send
+          </button>
+        </form>
+      </div>
 
       {/* Mobile back button style */}
       <style>{`

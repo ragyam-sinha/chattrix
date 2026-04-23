@@ -7,6 +7,15 @@ export default function ProfileDropdown() {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
   const [copied, setCopied] = useState(false);
+  const [theme, setTheme] = useState(document.documentElement.getAttribute('data-theme') || 'dark');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -48,6 +57,12 @@ export default function ProfileDropdown() {
           </div>
           <button onClick={handleCopyId}>
             {copied ? '✓ Copied Chatrix ID' : 'Copy Chatrix ID'}
+          </button>
+          <button onClick={() => window.location.href = '/app/settings'}>
+            Profile Settings
+          </button>
+          <button onClick={toggleTheme}>
+            Toggle Theme ({theme === 'dark' ? 'Light' : 'Dark'})
           </button>
           <button className="danger" onClick={handleLogout}>
             Sign Out

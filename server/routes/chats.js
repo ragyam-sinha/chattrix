@@ -59,6 +59,7 @@ router.get('/', async (req, res, next) => {
       participants: req.user.userId,
     })
       .populate('participants', '_id chatrixId displayName avatar')
+      .populate('connectionId', 'requesterId recipientId requesterCustomName recipientCustomName')
       .sort({ lastMessageAt: -1, createdAt: -1 });
 
     // Convert to plain objects and include unread count for current user
@@ -77,10 +78,9 @@ router.get('/', async (req, res, next) => {
 // GET /api/chats/:conversationId — conversation details
 router.get('/:conversationId', async (req, res, next) => {
   try {
-    const conversation = await Conversation.findById(req.params.conversationId).populate(
-      'participants',
-      '_id chatrixId displayName avatar'
-    );
+    const conversation = await Conversation.findById(req.params.conversationId)
+      .populate('participants', '_id chatrixId displayName avatar')
+      .populate('connectionId', 'requesterId recipientId requesterCustomName recipientCustomName');
 
     if (!conversation) return res.status(404).json({ error: 'Conversation not found' });
 
@@ -116,7 +116,6 @@ router.get('/:conversationId/messages', async (req, res, next) => {
       query.createdAt = { $gt: new Date(req.query.after) };
     }
 
-    // For initial load (no after), get the latest messages
     if (req.query.before) {
       query.createdAt = { ...query.createdAt, $lt: new Date(req.query.before) };
     }
@@ -126,7 +125,6 @@ router.get('/:conversationId/messages', async (req, res, next) => {
       .sort({ createdAt: req.query.after ? 1 : -1 })
       .limit(limit);
 
-    // If fetched in descending order (initial load), reverse for chronological display
     if (!req.query.after) {
       messages.reverse();
     }
@@ -148,7 +146,6 @@ router.post('/:conversationId/messages', async (req, res, next) => {
     );
     if (!isParticipant) return res.status(403).json({ error: 'Not a participant' });
 
-    // Verify connection is still accepted
     const connection = await Connection.findById(conversation.connectionId);
     if (!connection || connection.status !== 'accepted') {
       return res.status(403).json({ error: 'Connection is no longer accepted' });
@@ -164,10 +161,8 @@ router.post('/:conversationId/messages', async (req, res, next) => {
       text,
     });
 
-    // Update conversation with last message info
     const preview = text.length > 100 ? text.slice(0, 100) + '...' : text;
 
-    // Increment unread count for the other participant
     const otherParticipant = conversation.participants.find(
       (p) => p.toString() !== req.user.userId
     );
@@ -181,7 +176,6 @@ router.post('/:conversationId/messages', async (req, res, next) => {
       [`unreadCounts.${otherParticipant.toString()}`]: currentUnread + 1,
     });
 
-    // Populate sender for response
     await message.populate('senderId', '_id chatrixId displayName avatar');
 
     res.status(201).json({ message });
@@ -201,7 +195,6 @@ router.patch('/:conversationId/read', async (req, res, next) => {
     );
     if (!isParticipant) return res.status(403).json({ error: 'Not a participant' });
 
-    // Mark all unread messages from other senders as read
     await Message.updateMany(
       {
         conversationId: req.params.conversationId,
@@ -211,12 +204,31 @@ router.patch('/:conversationId/read', async (req, res, next) => {
       { readAt: new Date() }
     );
 
-    // Reset unread count for this user
     await Conversation.findByIdAndUpdate(req.params.conversationId, {
       [`unreadCounts.${req.user.userId}`]: 0,
     });
 
     res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/chats/messages/:messageId — soft delete a message
+router.delete('/messages/:messageId', async (req, res, next) => {
+  try {
+    const message = await Message.findById(req.params.messageId);
+    if (!message) return res.status(404).json({ error: 'Message not found' });
+
+    if (message.senderId.toString() !== req.user.userId) {
+      return res.status(403).json({ error: 'You can only delete your own messages' });
+    }
+
+    message.isDeleted = true;
+    message.text = 'This message was deleted';
+    await message.save();
+
+    res.json({ message });
   } catch (err) {
     next(err);
   }
