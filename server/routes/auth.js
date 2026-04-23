@@ -74,7 +74,7 @@ router.post('/google', async (req, res, next) => {
       { expiresIn: '7d' }
     );
 
-    const isProduction = process.env.NODE_ENV === 'production';
+    const isProduction = process.env.NODE_ENV === 'production' || req.headers.origin?.includes('.netlify.app');
 
     res.cookie('chatrix_session', token, {
       httpOnly: true,
@@ -130,7 +130,7 @@ router.get('/me', async (req, res, next) => {
 
 // POST /api/auth/logout — clear session cookie
 router.post('/logout', requireAuth, (req, res) => {
-  const isProduction = process.env.NODE_ENV === 'production';
+  const isProduction = process.env.NODE_ENV === 'production' || req.headers.origin?.includes('.netlify.app');
   res.clearCookie('chatrix_session', {
     httpOnly: true,
     secure: isProduction,

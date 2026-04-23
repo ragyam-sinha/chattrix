@@ -14,16 +14,39 @@ import notificationRoutes from '../server/routes/notifications.js';
 
 const app = express();
 
-// Connect to MongoDB
-connectDB().catch(console.error);
+// Ensure DB is connected before handling any request
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error('[DB Connection Error]', err.message);
+    res.status(500).json({ error: 'Database connection failed' });
+  }
+});
 
 // Security
 app.use(helmet({ contentSecurityPolicy: false }));
 
-// CORS
+// CORS — dynamically allow the request's origin if it matches known patterns
+const allowedOrigins = [
+  process.env.APP_URL,
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:8888',
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.APP_URL || 'http://localhost:5173',
+    origin(origin, callback) {
+      // Allow requests with no origin (curl, server-to-server, same-origin on Netlify)
+      if (!origin) return callback(null, true);
+      // Allow any *.netlify.app subdomain
+      if (origin.endsWith('.netlify.app')) return callback(null, true);
+      // Allow listed origins
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      callback(null, false);
+    },
     credentials: true,
   })
 );
