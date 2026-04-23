@@ -5,12 +5,12 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { connectDB } from '../server/config/db.js';
-import errorHandler from '../server/middleware/errorHandler.js';
-import authRoutes from '../server/routes/auth.js';
-import userRoutes from '../server/routes/users.js';
-import connectionRoutes from '../server/routes/connections.js';
-import chatRoutes from '../server/routes/chats.js';
-import notificationRoutes from '../server/routes/notifications.js';
+import { errorHandler } from '../server/middleware/errorHandler.js';
+import { authRoutes } from '../server/routes/auth.js';
+import { userRoutes } from '../server/routes/users.js';
+import { connectionRoutes } from '../server/routes/connections.js';
+import { chatRoutes } from '../server/routes/chats.js';
+import { notificationRoutes } from '../server/routes/notifications.js';
 
 const app = express();
 
