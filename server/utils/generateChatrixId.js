@@ -6,11 +6,14 @@ function randomSegment(len) {
   ).join('');
 }
 
-export default async function generateChatrixId(UserModel) {
+const generateChatrixId = async (UserModel) => {
   for (let attempts = 0; attempts < 10; attempts++) {
     const id = `CX-${randomSegment(4)}-${randomSegment(4)}`;
     const exists = await UserModel.exists({ chatrixId: id });
     if (!exists) return id;
   }
   throw new Error('Failed to generate unique Chatrix ID after 10 attempts');
-}
+};
+
+export { generateChatrixId };
+export default generateChatrixId;

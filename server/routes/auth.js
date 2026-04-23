@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
-import generateChatrixId from '../utils/generateChatrixId.js';
+import { generateChatrixId } from '../utils/generateChatrixId.js';
 import { requireAuth } from '../middleware/requireAuth.js';
 
 const router = Router();
