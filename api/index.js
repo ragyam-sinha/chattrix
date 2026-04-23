@@ -17,11 +17,18 @@ const app = express();
 // Ensure DB is connected before handling any request
 app.use(async (req, res, next) => {
   try {
+    if (!process.env.MONGODB_URI) {
+      throw new Error('MONGODB_URI is undefined in the serverless environment');
+    }
     await connectDB();
     next();
   } catch (err) {
-    console.error('[DB Connection Error]', err.message);
-    res.status(500).json({ error: 'Database connection failed' });
+    console.error('[DB Connection Error]', err.stack);
+    res.status(500).json({ 
+      error: 'Database connection failed', 
+      details: err.message,
+      uriExists: !!process.env.MONGODB_URI 
+    });
   }
 });
 
