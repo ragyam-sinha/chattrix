@@ -15,7 +15,7 @@ import notificationRoutes from '../server/routes/notifications.js';
 const app = express();
 
 // Connect to MongoDB
-await connectDB();
+connectDB().catch(console.error);
 
 // Security
 app.use(helmet({ contentSecurityPolicy: false }));
