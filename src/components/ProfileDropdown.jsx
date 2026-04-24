@@ -56,10 +56,28 @@ export default function ProfileDropdown() {
             <div className="email">{user?.email}</div>
           </div>
           <button onClick={handleCopyId}>
-            {copied ? '✓ Copied Chatrix ID' : 'Copy Chatrix ID'}
+            {copied ? '✓ Copied CHATTRIX ID' : 'Copy CHATTRIX ID'}
           </button>
           <button onClick={() => window.location.href = '/app/settings'}>
             Profile Settings
+          </button>
+          <button onClick={() => alert('Privacy controls are coming soon.')}>
+            Privacy & Security
+          </button>
+          <button onClick={() => alert('Notification preferences are coming soon.')}>
+            Notifications
+          </button>
+          <button onClick={() => alert('Starred messages panel coming soon.')}>
+            Starred Messages
+          </button>
+          <button onClick={() => alert('Archived chats section coming soon.')}>
+            Archived Chats
+          </button>
+          <button onClick={() => alert('Linked devices section coming soon.')}>
+            Linked Devices
+          </button>
+          <button onClick={() => alert('Help & support section coming soon.')}>
+            Help
           </button>
           <button onClick={toggleTheme}>
             Toggle Theme ({theme === 'dark' ? 'Light' : 'Dark'})

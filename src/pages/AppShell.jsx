@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import useAuthStore from '../store/useAuthStore';
-import { fetchNotifications } from '../services/api';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchChats, fetchNotifications } from '../services/api';
 import ChatsTab from '../components/chat/ChatsTab';
 import RequestsTab from '../components/connections/RequestsTab';
 import ContactsTab from '../components/connections/ContactsTab';
@@ -10,16 +9,29 @@ import SearchSection from '../components/search/SearchSection';
 import ChatWindow from '../components/chat/ChatWindow';
 import ProfileDropdown from '../components/ProfileDropdown';
 import ProfileSettings from '../components/ProfileSettings';
+import { subscribeToConversation } from '../lib/ably';
+import useAuthStore from '../store/useAuthStore';
 
 export default function AppShell() {
-  const { user } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState('chats');
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
 
-  // Figure out if a chat is open for responsive behavior
   const chatMatch = location.pathname.match(/\/app\/chat\/(.+)/);
   const activeChatId = chatMatch ? chatMatch[1] : null;
+  const activeTab = location.pathname.startsWith('/app/requests')
+    ? 'requests'
+    : location.pathname.startsWith('/app/contacts')
+      ? 'contacts'
+      : 'chats';
+
+  const { data: chatsData } = useQuery({
+    queryKey: ['chats'],
+    queryFn: fetchChats,
+    staleTime: 15000,
+    refetchInterval: false,
+  });
 
   const { data: notifications } = useQuery({
     queryKey: ['notifications'],
@@ -27,8 +39,50 @@ export default function AppShell() {
     refetchInterval: 10000,
   });
 
+  const conversationIds = useMemo(
+    () => (chatsData?.conversations || []).map((conversation) => conversation._id).sort(),
+    [chatsData?.conversations]
+  );
+  const conversationKey = conversationIds.join('|');
+
+  useEffect(() => {
+    if (!user?._id || conversationIds.length === 0) return;
+
+    let disposed = false;
+    const cleanups = [];
+
+    Promise.all(
+      conversationIds.map((conversationId) =>
+        subscribeToConversation(conversationId, {
+          onNewMessage: ({ message }) => {
+            const senderId = message?.senderId?._id || message?.senderId;
+            const isFromCurrentUser = senderId === user._id;
+
+            queryClient.invalidateQueries({ queryKey: ['chats'] });
+            if (!isFromCurrentUser) {
+              queryClient.invalidateQueries({ queryKey: ['notifications'] });
+            }
+          },
+          onMessageDeleted: () => {
+            queryClient.invalidateQueries({ queryKey: ['chats'] });
+          },
+        })
+      )
+    ).then((unsubscribers) => {
+      if (disposed) {
+        unsubscribers.forEach((unsubscribe) => unsubscribe?.());
+        return;
+      }
+      cleanups.push(...unsubscribers.filter(Boolean));
+    });
+
+    return () => {
+      disposed = true;
+      cleanups.forEach((unsubscribe) => unsubscribe());
+    };
+  }, [conversationKey, queryClient, user?._id]);
+
   const handleTabChange = (tab) => {
-    setActiveTab(tab);
     if (tab === 'chats') navigate('/app');
     else navigate(`/app/${tab}`);
   };
@@ -37,7 +91,10 @@ export default function AppShell() {
     <div className={`app-layout ${activeChatId ? 'has-chat' : ''}`}>
       <div className="sidebar">
         <div className="sidebar-header">
-          <h2>Chatrix</h2>
+          <div>
+            <h2>CHATTRIX</h2>
+            <p className="sidebar-tagline">Level up your conversations</p>
+          </div>
           <ProfileDropdown />
         </div>
 
@@ -90,8 +147,16 @@ export default function AppShell() {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
                 </svg>
-                <h3>Welcome to Chatrix</h3>
-                <p>Search for a Chatrix ID, connect with people, and start chatting. Select a conversation to begin.</p>
+                <h3>Welcome to CHATTRIX Arena</h3>
+                <p>
+                  Fast chats, smart connections, voice calls, and a gamified social vibe.
+                  Pick any conversation and dive in.
+                </p>
+                <div className="feature-pills">
+                  <span>Realtime Messages</span>
+                  <span>Read Receipts</span>
+                  <span>Voice Call</span>
+                </div>
               </div>
             }
           />

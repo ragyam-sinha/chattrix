@@ -3,10 +3,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { searchUser, sendConnectionRequest, acceptConnection, openChat } from '../../services/api';
 import { useNavigate } from 'react-router-dom';
 import Avatar from '../common/Avatar';
-import useAuthStore from '../../store/useAuthStore';
 
 export default function SearchSection() {
-  const { user } = useAuthStore();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [query, setQuery] = useState('');
@@ -14,6 +12,7 @@ export default function SearchSection() {
   const [error, setError] = useState('');
   const [searching, setSearching] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [showProfileDetails, setShowProfileDetails] = useState(false);
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -23,13 +22,14 @@ export default function SearchSection() {
     setSearching(true);
     setError('');
     setResult(null);
+    setShowProfileDetails(false);
 
     try {
       const data = await searchUser(q);
       setResult(data);
     } catch (err) {
       if (err.response?.status === 404) {
-        setError('No user found with this Chatrix ID');
+        setError('No user found with this CHATTRIX ID');
       } else {
         setError(err.response?.data?.error || 'Search failed');
       }
@@ -127,7 +127,7 @@ export default function SearchSection() {
           className="input"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search Chatrix ID (CX-XXXX-XXXX)"
+          placeholder="Search CHATTRIX ID (CX-XXXX-XXXX)"
           style={{ fontSize: '13px' }}
         />
         <button className="btn btn-primary btn-sm" type="submit" disabled={searching || !query.trim()}>
@@ -146,7 +146,15 @@ export default function SearchSection() {
             <div className="user-card-info">
               <h3>{result.user.displayName}</h3>
               <div className="chatrix-id">{result.user.chatrixId}</div>
-              {result.user.bio && <div className="bio">{result.user.bio}</div>}
+              {showProfileDetails && result.user.bio && <div className="bio">{result.user.bio}</div>}
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setShowProfileDetails((prev) => !prev)}
+                style={{ marginTop: '8px', paddingLeft: 0 }}
+              >
+                {showProfileDetails ? 'Hide Profile' : 'View Profile'}
+              </button>
             </div>
             {result.isSelf ? (
               <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>You</span>

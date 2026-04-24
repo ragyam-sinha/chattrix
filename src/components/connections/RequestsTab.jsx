@@ -128,7 +128,7 @@ export default function RequestsTab() {
           ) : outgoing.length === 0 ? (
             <div className="empty-state">
               <h3>No outgoing requests</h3>
-              <p>Search for a Chatrix ID to send a connection request</p>
+              <p>Search for a CHATTRIX ID to send a connection request</p>
             </div>
           ) : (
             outgoing.map((conn) => {

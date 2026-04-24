@@ -31,24 +31,44 @@ export async function getAblyClient() {
 export async function subscribeToConversation(conversationId, handlers) {
   const client = await getAblyClient();
   const channel = client.channels.get(`conversation:${conversationId}`);
+  const subscriptions = [];
 
   if (handlers.onNewMessage) {
-    await channel.subscribe('new_message', (msg) => {
+    const listener = (msg) => {
       handlers.onNewMessage(msg.data);
-    });
+    };
+    subscriptions.push(['new_message', listener]);
+    await channel.subscribe('new_message', listener);
   }
 
   if (handlers.onMessageDeleted) {
-    await channel.subscribe('message_deleted', (msg) => {
+    const listener = (msg) => {
       handlers.onMessageDeleted(msg.data);
-    });
+    };
+    subscriptions.push(['message_deleted', listener]);
+    await channel.subscribe('message_deleted', listener);
+  }
+
+  if (handlers.onVoiceSignal) {
+    const listener = (msg) => {
+      handlers.onVoiceSignal(msg.data);
+    };
+    subscriptions.push(['voice_signal', listener]);
+    await channel.subscribe('voice_signal', listener);
   }
 
   // Return cleanup function
   return () => {
-    channel.unsubscribe();
-    channel.detach();
+    subscriptions.forEach(([eventName, listener]) => {
+      channel.unsubscribe(eventName, listener);
+    });
   };
+}
+
+export async function publishConversationEvent(conversationId, eventName, payload) {
+  const client = await getAblyClient();
+  const channel = client.channels.get(`conversation:${conversationId}`);
+  await channel.publish(eventName, payload);
 }
 
 /**

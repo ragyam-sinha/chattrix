@@ -58,7 +58,7 @@ export default function ContactsTab() {
     return (
       <div className="empty-state">
         <h3>No contacts yet</h3>
-        <p>Accept connection requests or search for a Chatrix ID to connect with people</p>
+        <p>Accept connection requests or search for a CHATTRIX ID to connect with people</p>
       </div>
     );
   }

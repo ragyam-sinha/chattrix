@@ -28,17 +28,23 @@ export const fetchChats = () => api.get('/chats').then((r) => r.data);
 export const fetchConversation = (id) => api.get(`/chats/${id}`).then((r) => r.data);
 export const openChat = (connectionId) =>
   api.post('/chats/open', { connectionId }).then((r) => r.data);
+export const createGroupChat = (groupName, memberIds) =>
+  api.post('/chats/groups', { groupName, memberIds }).then((r) => r.data);
 export const fetchMessages = (conversationId, after) => {
   const params = new URLSearchParams({ limit: '30' });
   if (after) params.set('after', after);
   return api.get(`/chats/${conversationId}/messages?${params}`).then((r) => r.data);
 };
-export const sendMessage = (conversationId, text) =>
-  api.post(`/chats/${conversationId}/messages`, { text }).then((r) => r.data);
+export const sendMessage = (conversationId, payload) => {
+  const body = typeof payload === 'string' ? { text: payload } : payload;
+  return api.post(`/chats/${conversationId}/messages`, body).then((r) => r.data);
+};
 export const markAsRead = (conversationId) =>
   api.patch(`/chats/${conversationId}/read`).then((r) => r.data);
 export const deleteMessage = (messageId) =>
   api.delete(`/chats/messages/${messageId}`).then((r) => r.data);
+export const forwardMessage = (messageId, conversationIds) =>
+  api.post(`/chats/messages/${messageId}/forward`, { conversationIds }).then((r) => r.data);
 
 // Notifications
 export const fetchNotifications = () => api.get('/notifications').then((r) => r.data);

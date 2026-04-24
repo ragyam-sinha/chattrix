@@ -35,12 +35,17 @@ export default function OnboardingPage() {
 
   return (
     <div className="onboarding-page">
-      <div className="onboarding-card">
-        <h2>Welcome to Chatrix!</h2>
-        <p className="subtitle">Here's your unique Chatrix ID. Share it with friends to connect.</p>
+      <div className="auth-scene">
+        <span className="auth-orb orb-1" />
+        <span className="auth-orb orb-2" />
+        <span className="auth-orb orb-3" />
+      </div>
+      <div className="onboarding-card animate-card-entry">
+        <h2 className="hero-title">Welcome to CHATTRIX!</h2>
+        <p className="subtitle">Here is your unique CHATTRIX ID. Share it with friends to connect.</p>
 
         <div className="chatrix-id-display" onClick={handleCopy} title="Click to copy">
-          <div className="label">{copied ? '✓ Copied!' : 'Your Chatrix ID (click to copy)'}</div>
+          <div className="label">{copied ? '✓ Copied!' : 'Your CHATTRIX ID (click to copy)'}</div>
           <div className="id">{user?.chatrixId}</div>
         </div>
 

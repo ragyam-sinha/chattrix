@@ -18,8 +18,9 @@ router.get('/token', async (req, res, next) => {
     const tokenRequest = await ably.auth.createTokenRequest({
       clientId: req.user.userId,
       capability: {
-        // Allow user to subscribe to any conversation:* channel
-        'conversation:*': ['subscribe'],
+        // Allow authenticated users to exchange WebRTC signaling data
+        // and subscribe to real-time message updates.
+        'conversation:*': ['subscribe', 'publish'],
       },
     });
 
