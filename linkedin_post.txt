@@ -1,0 +1,24 @@
+I tried deploying a chat app on Netlify.
+
+Netlify told me WebSockets don't work there.
+
+So I had to figure out a different approach.
+
+Serverless platforms like Netlify and Vercel run on AWS Lambda. Each function spins up, handles one request, and shuts down. There's no persistent connection. And real-time chat needs exactly that — a connection that stays open.
+
+My first fix was polling. Every 1 second, the browser would ask the server "any new messages?" It worked, but felt embarrassing to ship.
+
+Eventually I landed on something cleaner. Instead of forcing my serverless backend to hold a WebSocket connection, I let Ably do it. My server saves the message to MongoDB, then tells Ably "hey, publish this." Ably pushes it to the other user's browser instantly over WebSocket. My backend stays stateless, Netlify stays happy, and messages arrive in under 100ms.
+
+That's the architecture behind Chatrix — a chat app I built over the last few weeks.
+
+It has a WhatsApp-style message layout, dark and light theme, emoji support, soft-delete for messages, and a LinkedIn-style connection system where you have to send a request before you can message someone. You can also rename your contacts and the name syncs to the database so it shows up on every device you use.
+
+The stack is React 19, Node.js, MongoDB Atlas, Google OAuth, and Ably for real-time.
+
+Live: https://chatrixxx.netlify.app
+Code: https://github.com/ragyam-sinha/chattrix
+
+Curious what others are using for real-time on serverless — SSE, Pusher, long polling? Let me know what's worked for you.
+
+#webdevelopment #javascript #react #nodejs #mongodb #serverless #buildinpublic

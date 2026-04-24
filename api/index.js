@@ -51,6 +51,8 @@ app.use(
       if (!origin) return callback(null, true);
       // Allow any *.netlify.app subdomain
       if (origin.endsWith('.netlify.app')) return callback(null, true);
+      // Allow any *.vercel.app subdomain
+      if (origin.endsWith('.vercel.app')) return callback(null, true);
       // Allow listed origins
       if (allowedOrigins.includes(origin)) return callback(null, true);
       callback(null, false);
